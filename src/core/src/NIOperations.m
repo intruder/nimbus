@@ -246,6 +246,23 @@
                                           returningResponse:&response
                                                       error:&networkError];
 
+#pragma warning this is a patch to fix loading cached responses when there is no internet connection in iOS 6.0
+      
+      if(networkError.code == NSURLErrorNotConnectedToInternet
+         && self.cachePolicy != NSURLRequestReloadIgnoringLocalCacheData
+         && self.cachePolicy != NSURLRequestReloadIgnoringLocalAndRemoteCacheData
+         && self.cachePolicy != NSURLRequestReloadIgnoringCacheData ) {
+          NSCachedURLResponse *cachedResponse = [[NSURLCache sharedURLCache] cachedResponseForRequest:request];
+          
+          data = cachedResponse.data;
+          response = cachedResponse.response;
+          
+          if(data && response)
+              networkError = nil;
+      }
+      
+#pragma warning end of patch
+      
     // If we get a 404 error then the request will not fail with an error, so only let successful
     // responses pass.
     if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
